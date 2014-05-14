@@ -15,8 +15,16 @@ var Generator = module.exports = function Generator() {
   this.appname = this._.slugify(this._.humanize(this.appname));
   this.scriptAppName = this._.camelize(this.appname) + angularUtils.appName(this);
 
-  this.cameledName = this._.camelize(this.name);
-  this.classedName = this._.classify(this.name);
+  //this.cameledName = this._.camelize(this.name);
+  //this.classedName = this._.classify(this.name);
+  var name = this.name.split('/');
+  if(name.length > 1) {
+    this.classedName = this._.classify(name[name.length-1]);
+    this.cameledName = this._.camelize(name[name.length-1]);
+  } else {
+    this.classedName = this._.classify(name[0]);
+    this.cameledName = this._.camelize(name[0]);
+  }
 
   if (typeof this.env.options.appPath === 'undefined') {
     try {
@@ -125,8 +133,19 @@ Generator.prototype.addScriptToIndex = function (script) {
   }
 };
 
+// Generator.prototype.generateSourceAndTest = function (appTemplate, testTemplate, targetDirectory, skipAdd) {
+//   if (this.generatorName.toLowerCase() === 'service') {
+//     this.cameledName = this.classedName;
+//   }
+
+//   this.appTemplate(appTemplate, path.join('scripts', targetDirectory, this.name));
+//   this.testTemplate(testTemplate, path.join(targetDirectory, this.name));
+//   if (!skipAdd) {
+//     this.addScriptToIndex(path.join(targetDirectory, this.name));
+//   }
+// };
+
 Generator.prototype.generateSourceAndTest = function (appTemplate, testTemplate, targetDirectory, skipAdd) {
-  // Services use classified names
   if (this.generatorName.toLowerCase() === 'service') {
     this.cameledName = this.classedName;
   }
@@ -135,5 +154,36 @@ Generator.prototype.generateSourceAndTest = function (appTemplate, testTemplate,
   this.testTemplate(testTemplate, path.join(targetDirectory, this.name));
   if (!skipAdd) {
     this.addScriptToIndex(path.join(targetDirectory, this.name));
+  }
+};
+
+Generator.prototype.addDomainScriptToIndex = function (script) {
+  try {
+    var appPath = this.env.options.appPath;
+    var fullPath = path.join(appPath, 'views', 'index' + this.viewSuffix);
+    angularUtils.rewriteFile({
+      file: fullPath,
+      needle: '<!-- endbuild -->',
+      splicable: [
+        '<script src="' + script.replace('\\', '/') + '.js"></script>'
+      ]
+    });
+  } catch (e) {
+    console.log('\nUnable to find '.yellow + fullPath + '. Reference to '.yellow + script + '.js ' + 'not added.\n'.yellow);
+  }
+};
+
+Generator.prototype.generateDomainSourceAndTest = function (appTemplate, testTemplate, targetDirectory, skipAdd) {
+
+  // Services use classified names
+  if (this.generatorName.toLowerCase() === 'directive'
+       || this.generatorName.toLowerCase() === 'domaindirective') {
+    this.classedName = this.cameledName;
+  }
+
+  this.appTemplate(appTemplate, path.join(targetDirectory, this.name));
+  this.testTemplate(testTemplate, path.join(targetDirectory, this.name));
+  if (!skipAdd) {
+    this.addDomainScriptToIndex(path.join(targetDirectory, this.name));
   }
 };
