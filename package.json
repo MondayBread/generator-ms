@@ -1,6 +1,6 @@
 {
   "name": "generator-ms",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Domain Specific Development & Yeoman generator for creating MEAN stack applications, using MongoDB, Express, AngularJS, and Node",
   "keywords": [
     "yeoman-generator",
